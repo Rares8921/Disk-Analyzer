@@ -142,20 +142,11 @@ void analyze(const char *path, int jobID) {
 
 
 void updateUnitAndCopy(LL *copy, char *unit) {
-    if (*copy > 1024) {
+    const char *units[] = {"B", "KB", "MB", "GB", "TB"};
+    int i = 0;
+    while (*copy > 1024 && i < 4) {
         *copy /= 1024;
-        strcpy(unit, "KB");
+        i++;
     }
-    if (*copy > 1024) {
-        *copy /= 1024;
-        strcpy(unit, "MB");
-    }
-    if (*copy > 1024) {
-        *copy /= 1024;
-        strcpy(unit, "GB");
-    }
-    if (*copy > 1024) {
-        *copy /= 1024;
-        strcpy(unit, "TB");
-    }
+    strcpy(unit, units[i]);
 }
