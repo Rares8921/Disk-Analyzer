@@ -1,0 +1,3 @@
+Path  Usage  Size  Amount
+/home/rares/tests01  100%  2KB  #########################################
+|

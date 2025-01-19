@@ -1,0 +1,4 @@
+Path  Usage  Size  Amount
+/home/rares/bar  100%  4KB  #########################################
+|
+|-/home/rares/bar/test1/  0.24%  10B  #

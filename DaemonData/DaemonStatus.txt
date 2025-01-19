@@ -1,0 +1,3 @@
+Task ID | Folder Path                    | Size (bytes)
+---------------------------------------------------------
+      1 | /home/rares/bar                | 16

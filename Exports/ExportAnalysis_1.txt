@@ -1,0 +1,4 @@
+Path  Usage  Size  Amount
+/home/rares/foo  100%  4KB  #########################################
+|
+|-/home/rares/foo/test1/  0.24%  10B  #
