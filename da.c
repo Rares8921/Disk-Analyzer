@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
 
     switch (command[1]) {
         case 'h': // -h sau --help
-            if (strcmp(command, "-h") == 0 || strcmp(command, "--help") == 0) {
+            if ((strcmp(command, "-h") == 0 || strcmp(command, "--help") == 0) && argc == 2) {
                 printf("Usage: da [OPTION]... [DIR]...\n"
                        "Analyze the space occupied by the directory at [DIR]\n\n"
                        "-a, --add           analyze a new directory path for disk usage\n"
@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
             break;
 
         case 'a': // -a sau --add
-            if (strcmp(command, "-a") == 0 || strcmp(command, "--add") == 0) {
+            if ((strcmp(command, "-a") == 0 || strcmp(command, "--add") == 0) && (argc == 3 || argc == 5)) {
                 if (argc < 3) {
                     printf("Not enough arguments provided. Exiting...\n");
                     return -1;
@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
             break;
 
         case 'S': // -S sau --suspend
-            if (strcmp(command, "-S") == 0 || strcmp(command, "--suspend") == 0) {
+            if ((strcmp(command, "-S") == 0 || strcmp(command, "--suspend") == 0) && argc == 3) {
                 if (argc < 3) {
                     printf("Not enough arguments provided. Exiting...\n");
                     return -1;
@@ -166,7 +166,7 @@ int main(int argc, char **argv) {
             break;
 
         case 'R': // -R sau --resume
-            if (strcmp(command, "-R") == 0 || strcmp(command, "--resume") == 0) {
+            if ((strcmp(command, "-R") == 0 || strcmp(command, "--resume") == 0) && argc == 3) {
                 if (argc < 3) {
                     printf("Not enough arguments provided. Exiting...\n");
                     return -1;
@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
             break;
 
         case 'r': // -r sau --remove
-            if (strcmp(command, "-r") == 0 || strcmp(command, "--remove") == 0) {
+            if ((strcmp(command, "-r") == 0 || strcmp(command, "--remove") == 0) && argc == 3) {
                 if (argc < 3) {
                     printf("Not enough arguments provided. Exiting...\n");
                     return -1;
@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
             break;
 
         case 'i': // -i sau --info
-            if (strcmp(command, "-i") == 0 || strcmp(command, "--info") == 0) {
+            if ((strcmp(command, "-i") == 0 || strcmp(command, "--info") == 0) && argc == 3) {
                 if (argc < 3) {
                     printf("Not enough arguments provided. Exiting...\n");
                     return -1;
@@ -208,7 +208,7 @@ int main(int argc, char **argv) {
             break;
 
         case 'l': // -l sau --list
-            if (strcmp(command, "-l") == 0 || strcmp(command, "--list") == 0) {
+            if ((strcmp(command, "-l") == 0 || strcmp(command, "--list") == 0) && argc == 2) {
                 generateInstruction(LIST, 0, instructions);
                 sendDaemonInstruction(instructions);
             } else {
@@ -216,8 +216,17 @@ int main(int argc, char **argv) {
             }
             break;
 
+        case 'd': // -d sau --dupl
+            if ((strcmp(command, "-d") == 0 || strcmp(command, "--dupl") == 0) && argc == 2) {
+                generateInstruction(DUPLICATE, -3, instructions);
+                sendDaemonInstruction(instructions);
+            } else {
+                printf("Invalid use of -d. Use -h or --help for usage information.\n");
+            }
+            break;
+
         case 't': // -t sau --terminate
-            if (strcmp(command, "-t") == 0 || strcmp(command, "--terminate") == 0) {
+            if ((strcmp(command, "-t") == 0 || strcmp(command, "--terminate") == 0) && argc == 2) {
                 FILE *fp = popen("ps aux | grep '[d]aemon' | awk '{print $2}'", "r");
                 if (fp == NULL) {
                     perror("popen");
