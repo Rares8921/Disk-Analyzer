@@ -216,6 +216,44 @@ int main(int argc, char **argv) {
             }
             break;
 
+        case 'p': // -p sau --print
+            if ((strcmp(command, "-p") == 0 || strcmp(command, "--print") == 0) && argc == 3) {
+                int pid = atoi(argv[2]);
+                generateInstruction(PRINT, pid, instructions);
+                sendDaemonInstruction(instructions);
+            } else {
+                printf("Invalid usage of -p. Correct format: -p <id>.\n");
+            }
+            break;
+
+        case 'e': // -e sau --export
+            if ((strcmp(command, "-e") == 0 || strcmp(command, "--export") == 0) && argc == 2) {
+                generateInstruction(EXPORT, -1, instructions);
+                sendDaemonInstruction(instructions);
+            } else {
+                printf("Invalid usage of -e. This command takes no additional arguments.\n");
+            }
+            break;
+
+        case 'b': // -b sau --backup
+            if ((strcmp(command, "-b") == 0 || strcmp(command, "--backup") == 0) && argc == 3) {
+                int pid = atoi(argv[2]);
+                generateInstruction(BACKUP, pid, instructions);
+                sendDaemonInstruction(instructions);
+            } else {
+                printf("Invalid usage of -b. Correct format: -b <id>.\n");
+            }
+            break;
+
+        case 's': // -s sau --sort
+            if ((strcmp(command, "-s") == 0 || strcmp(command, "--sort") == 0) && argc == 2) {
+                generateInstruction(SORT, -2, instructions);
+                sendDaemonInstruction(instructions);
+            } else {
+                printf("Invalid usage of -s. This command takes no additional arguments.\n");
+            }
+            break;
+
         case 'd': // -d sau --dupl
             if ((strcmp(command, "-d") == 0 || strcmp(command, "--dupl") == 0) && argc == 2) {
                 generateInstruction(DUPLICATE, -3, instructions);
