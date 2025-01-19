@@ -9,7 +9,7 @@
 #define DA_ANSWER_PATH "/home/rares/ProiectSO/DaemonData/DaemonStatus.txt"
 #define DA_INSTRUCTION_PATH "/home/rares/ProiectSO/DaemonData/DaemonEvent.txt"
 
-const enum TaskList {
+enum TaskList {
     ADD = 1,
     SUSPEND,
     RESUME,
