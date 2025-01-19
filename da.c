@@ -5,9 +5,9 @@
 #include <signal.h>   // SIGUSR1, SIGUSR2, SIGTERM
 #include <sys/types.h> // pid_t
 
-#define DA_PID_PATH "de_completat"
-#define DA_OUTPUT_PATH "de_completat"
-#define DA_INSTRUCTION_PATH "de_completat"
+#define DA_PID_PATH "/home/rares/ProiectSO/DaemonData/DaemonPID"
+#define DA_ANSWER_PATH "/home/rares/ProiectSO/DaemonData/DaemonStatus.txt"
+#define DA_INSTRUCTION_PATH "/home/rares/ProiectSO/DaemonData/DaemonEvent.txt"
 
 const enum TaskList {
     ADD = 1,
@@ -16,7 +16,11 @@ const enum TaskList {
     KILL,
     INFO,
     LIST,
-    PRINT
+    PRINT,
+    EXPORT,
+    BACKUP,
+    SORT,
+    DUPLICATE,
 };
 
 int daemonPID, processPID;
@@ -71,14 +75,14 @@ int optionalFlagEquals(const char *option, const char *str1, const char *str2) {
 }
 
 void printDaemonOutput(int signal) {
-    char *data = readFromFile(DA_OUTPUT_PATH);
+    char *data = readFromFile(DA_ANSWER_PATH);
     printf("%s\n", data);
 }
 
 void sendDaemonInstruction(const char *instruction) {
     writeToFile(DA_INSTRUCTION_PATH, instruction);
     kill(daemonPID, SIGUSR1);
-    sleep(3);
+    sleep(5);
 }
 
 void initializeEnviroment() {
@@ -99,130 +103,144 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    /**
-     * TODO:
-     *      --export
-     *      --backup
-     *      --sort
-     *      --dupl
-     */
-
     char instructions[2048];
-    switch (argc > 1 ? argv[1][1] : 0) {
+    const char *command = argv[1];
 
-        case 'h': {  // -h, --help
-            printf("Usage: da [OPTION]... [DIR]...\n"
-                   "Analyze the space occupied by the directory at [DIR]\n\n"
-                   "-a, --add           analyze a new directory path for disk usage\n"
-                   "-p, --priority      set priority for the new analysis (works only with -a argument)\n"
-                   "-S, --suspend <id>  suspend task with <id>\n"
-                   "-R, --resume <id>   resume task with <id>\n"
-                   "-r, --remove <id>   remove the analysis with the given <id>\n"
-                   "-i, --info <id>     print status about the analysis with <id> (pending, progress, done)\n"
-                   "-l, --list          list all analysis tasks, with their ID and the corresponding root path\n"
-                   "-p, --print <id>    print analysis report for those tasks that are \"done\"\n"
-                   "-e, --export        export analysis result in a text file\n\n"
-                   "-b, --backup <id>   creates a backup of content specified at analysis with the given <id>\n\n"
-                   "-s, --sort          sort folders from all tasks decreasing according to the size of the files\n\n"
-                   "-d, --dupl <id>     lists the duplicates inside folder specified at analysis with the given <id>\n\n"
-                   "-t, --terminate     terminates the daemon analysis\n\n");
-            break;
-        }
-
-        case 'a': {  // -a, --add
-            if (argc < 3) {
-                printf("Not enough arguments provided. Exiting...\n");
-                return -1;
+    switch (command[1]) {
+        case 'h': // -h sau --help
+            if (strcmp(command, "-h") == 0 || strcmp(command, "--help") == 0) {
+                printf("Usage: da [OPTION]... [DIR]...\n"
+                       "Analyze the space occupied by the directory at [DIR]\n\n"
+                       "-a, --add           analyze a new directory path for disk usage\n"
+                       "-p, --priority      set priority for the new analysis (works only with -a argument)\n"
+                       "-S, --suspend <id>  suspend task with <id>\n"
+                       "-R, --resume <id>   resume task with <id>\n"
+                       "-r, --remove <id>   remove the analysis with the given <id>\n"
+                       "-i, --info <id>     print status about the analysis with <id> (pending, progress, done)\n"
+                       "-l, --list          list all analysis tasks, with their ID and the corresponding root path\n"
+                       "-p, --print <id>    print analysis report for those tasks that are \"done\"\n"
+                       "-e, --export        export analysis result in a text file\n"
+                       "-b, --backup <id>   creates a backup of content specified at analysis with the given <id>\n"
+                       "-s, --sort          sort folders from all tasks decreasing according to the size of the files\n"
+                       "-d, --dupl          lists the duplicates inside all folders specified at analysis\n"
+                       "-t, --terminate     terminates the daemon analysis\n");
+            } else {
+                printf("Unknown command! Use -h or --help for usage information.\n");
             }
-            int priority = 1;
-            char *path = argv[2];
-            if (argc == 5 && optionalFlagEquals(argv[3], "-p", "--priority")) {
-                priority = atoi(argv[4]);
-                if (priority < 1 || priority > 3) {
-                    printf("Priority should have one of the values: 1-low, 2-normal, 3-high\n");
+            break;
+
+        case 'a': // -a sau --add
+            if (strcmp(command, "-a") == 0 || strcmp(command, "--add") == 0) {
+                if (argc < 3) {
+                    printf("Not enough arguments provided. Exiting...\n");
                     return -1;
                 }
-            }
-            snprintf(instructions, 2048, "TYPE %d\nPRIORITY %d\nPATH %s\nPPID %d", ADD, priority, path, processPID);
-            sendDaemonInstruction(instructions);
-            break;
-        }
-
-        case 'S': {  // -S, --suspend
-            if (argc < 3) 
-                return -1;
-            int pid = atoi(argv[2]);
-            generateInstruction(SUSPEND, pid, instructions);
-            sendDaemonInstruction(instructions);
-            break;
-        }
-
-        case 'R': {  // -R, --resume
-            if (argc < 3) 
-                return -1;
-            int pid = atoi(argv[2]);
-            generateInstruction(RESUME, pid, instructions);
-            sendDaemonInstruction(instructions);
-            break;
-        }
-
-        case 'r': {  // -r, --remove
-            if (argc < 3) 
-                return -1;
-            int pid = atoi(argv[2]);
-            generateInstruction(KILL, pid, instructions);
-            sendDaemonInstruction(instructions);
-            break;
-        }
-
-        case 'i': {  // -i, --info
-            if (argc < 3) 
-                return -1;
-            int pid = atoi(argv[2]);
-            generateInstruction(INFO, pid, instructions);
-            sendDaemonInstruction(instructions);
-            break;
-        }
-
-        case 'l': {  // -l, --list
-            generateInstruction(LIST, 0, instructions);
-            sendDaemonInstruction(instructions);
-            break;
-        }
-
-        case 'p': {  // -p, --print
-            if (argc < 3) 
-                return -1;
-            int pid = atoi(argv[2]);
-            generateInstruction(PRINT, pid, instructions);
-            sendDaemonInstruction(instructions);
-            break;
-        }
-
-        case 'e': { // -e, --export
-            break;
-        }
-
-        case 'b': { // -b, --backup
-            break;
-        }
-
-        case 's': { // -s, --sort
-            break;
-        }
-
-        case 'd': { // -d, --dupl
-            break;
-        }
-
-        case 't': {  // -t, --terminate
-            pid_t receivedPID = getDaemonPID();
-            if (receivedPID != -1) {
-                kill(receivedPID, SIGTERM);
-                printf("The daemon with PID `%d` terminated successfully!\n", receivedPID);
+                int priority = 1;
+                char *path = argv[2];
+                if (argc == 5 && optionalFlagEquals(argv[3], "-p", "--priority")) {
+                    priority = atoi(argv[4]);
+                    if (priority < 1 || priority > 3) {
+                        printf("Priority should have one of the values: 1-low, 2-normal, 3-high\n");
+                        return -1;
+                    }
+                }
+                snprintf(instructions, 2048, "TYPE %d\nPRIORITY %d\nPATH %s\nPPID %d", ADD, priority, path, processPID);
+                sendDaemonInstruction(instructions);
+            } else {
+                printf("Invalid use of -a. Use -h or --help for usage information.\n");
             }
             break;
-        }
+
+        case 'S': // -S sau --suspend
+            if (strcmp(command, "-S") == 0 || strcmp(command, "--suspend") == 0) {
+                if (argc < 3) {
+                    printf("Not enough arguments provided. Exiting...\n");
+                    return -1;
+                }
+                int pid = atoi(argv[2]);
+                generateInstruction(SUSPEND, pid, instructions);
+                sendDaemonInstruction(instructions);
+            } else {
+                printf("Invalid use of -S. Use -h or --help for usage information.\n");
+            }
+            break;
+
+        case 'R': // -R sau --resume
+            if (strcmp(command, "-R") == 0 || strcmp(command, "--resume") == 0) {
+                if (argc < 3) {
+                    printf("Not enough arguments provided. Exiting...\n");
+                    return -1;
+                }
+                int pid = atoi(argv[2]);
+                generateInstruction(RESUME, pid, instructions);
+                sendDaemonInstruction(instructions);
+            } else {
+                printf("Invalid use of -R. Use -h or --help for usage information.\n");
+            }
+            break;
+
+        case 'r': // -r sau --remove
+            if (strcmp(command, "-r") == 0 || strcmp(command, "--remove") == 0) {
+                if (argc < 3) {
+                    printf("Not enough arguments provided. Exiting...\n");
+                    return -1;
+                }
+                int pid = atoi(argv[2]);
+                generateInstruction(KILL, pid, instructions);
+                sendDaemonInstruction(instructions);
+            } else {
+                printf("Invalid use of -r. Use -h or --help for usage information.\n");
+            }
+            break;
+
+        case 'i': // -i sau --info
+            if (strcmp(command, "-i") == 0 || strcmp(command, "--info") == 0) {
+                if (argc < 3) {
+                    printf("Not enough arguments provided. Exiting...\n");
+                    return -1;
+                }
+                int pid = atoi(argv[2]);
+                generateInstruction(INFO, pid, instructions);
+                sendDaemonInstruction(instructions);
+            } else {
+                printf("Invalid use of -i. Use -h or --help for usage information.\n");
+            }
+            break;
+
+        case 'l': // -l sau --list
+            if (strcmp(command, "-l") == 0 || strcmp(command, "--list") == 0) {
+                generateInstruction(LIST, 0, instructions);
+                sendDaemonInstruction(instructions);
+            } else {
+                printf("Invalid use of -l. Use -h or --help for usage information.\n");
+            }
+            break;
+
+        case 't': // -t sau --terminate
+            if (strcmp(command, "-t") == 0 || strcmp(command, "--terminate") == 0) {
+                FILE *fp = popen("ps aux | grep '[d]aemon' | awk '{print $2}'", "r");
+                if (fp == NULL) {
+                    perror("popen");
+                    break;
+                }
+
+                char pid_str[10];
+                while (fgets(pid_str, sizeof(pid_str), fp) != NULL) {
+                    pid_t pid = atoi(pid_str);
+                    if (pid > 0) {
+                        if (kill(pid, SIGKILL) == 0) {
+                            printf("Successfully terminated daemon process with PID %d.\n", pid);
+                        } else {
+                            perror("kill");
+                        }
+                    }
+                }
+
+                fclose(fp);
+            } else {
+                printf("Invalid use of -t. Use -h or --help for usage information.\n");
+            }
+            break;
 
         default:
             printf("This command does not exist! Use -h or --help\n");
